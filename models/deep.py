@@ -20,9 +20,9 @@ class Model(nn.Module):
         self.dropout = nn.Dropout(p=params.dropout)
 
         if params.output_fun == 'sigmoid':
-            self.output = F.sigmoid
+            self.output = torch.sigmoid
         if params.output_fun == 'tanh':
-            self.output = F.tanh
+            self.output = torch.tanh
 
     def forward(self, x):
         # CNN
