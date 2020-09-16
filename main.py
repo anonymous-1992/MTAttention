@@ -81,7 +81,7 @@ def main():
     parser.add_argument('--ephocs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--dropout', type=float, default=0.2)
-    parser.add_argument('--gpu', type=str, default=None)
+    parser.add_argument('--gpu', type=int, default=None)
     parser.add_argument('--save', type=str, default='model/model.pt')
     parser.add_argument('--cuda', type=str, default=True)
     parser.add_argument('--lr', type=float, default=0.001)
@@ -91,7 +91,7 @@ def main():
 
     params.cuda = params.gpu is not None
     if params.cuda:
-        torch.cuda.set_device('cuda')
+        torch.cuda.set_device(params.gpu)
 
     Data = DataUtility(params)
 
