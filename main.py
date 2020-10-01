@@ -1,10 +1,7 @@
-import argparse
+import torch
 import time
 from torch.nn import functional as F
-from models.deep import Model
-
-
-from utils import *
+import numpy as np
 from torch import optim
 
 SEED = 1234
@@ -30,6 +27,7 @@ def train(data, X, Y, model, optimizer, batch_size):
 
 
 def evaluate(data, X, Y, model, batch_size):
+
     model.eval()
     total_loss = 0
     n_samples = 0
@@ -70,33 +68,7 @@ def evaluate(data, X, Y, model, batch_size):
     return loss_mean, val_rrse, val_corr
 
 
-def main():
-    parser = argparse.ArgumentParser(description='pytocrh time series forecasting')
-    parser.add_argument('--data_dir', type=str, default="data")
-    parser.add_argument('--hidCNN', type=int, default=100)
-    parser.add_argument('--hidRNN', type=int, default=100)
-    parser.add_argument('--window', type=int, default=36)
-    parser.add_argument('--horizon', type=int, default=4)
-    parser.add_argument('--CNN_kernel', type=int, default=6)
-    parser.add_argument('--ephocs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--dropout', type=float, default=0.2)
-    parser.add_argument('--gpu', type=int, default=None)
-    parser.add_argument('--save', type=str, default='model/model.pt')
-    parser.add_argument('--cuda', type=str, default=True)
-    parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--normalize', type=int, default=1)
-    parser.add_argument('--output_fun', type=str, default='sigmoid')
-    params = parser.parse_args()
-
-    params.cuda = params.gpu is not None
-    if params.cuda:
-        torch.cuda.set_device(params.gpu)
-
-    Data = DataUtility(params)
-
-    print('-----Model-------')
-    model = Model(params)
+def run_models(model, Data, params):
 
     optimizer = optim.Adam(model.parameters())
 
@@ -121,7 +93,3 @@ def main():
         model = torch.load(f)
     test_rmse, test_rse, test_corr = evaluate(Data, Data.test[0], Data.test[1], model, params.batch_size)
     print('|  Test rmse {:5.4f} |  Test rse {:5.4f} |  Test corr {:5.4f}'.format(test_rmse, test_rse, test_corr))
-
-
-if __name__ == '__main__':
-    main()

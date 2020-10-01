@@ -42,14 +42,14 @@ class DataUtility(object):
 
         n = len(data_set)
         X = torch.zeros((n, self.window, 1))
-        Y = torch.zeros((n, 1))
+        Y = torch.zeros((n, self.horizon, 1))
 
         for i in range(n):
             start = i
             end = i + self.window
             if end+self.horizon <= n:
                 X[i, :, :] = torch.from_numpy(data_set[start:end, :])
-                Y[i, :] = torch.from_numpy(data_set[end+self.horizon - 1])
+                Y[i, :, :] = torch.from_numpy(data_set[end:end+self.horizon, :])
         return [X, Y]
 
     def get_batches(self, inputs, target, batch_size, shuffle=True):
