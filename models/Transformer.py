@@ -209,6 +209,7 @@ def data_loader(params, set_type):
 
 
 def evaluate(params, model, eval_loader):
+    model.eval()
     total_samples = 0
     total_loss = 0
     predict = None
@@ -288,7 +289,6 @@ def main():
         loss = train(params, model, train_iter, criterion)
         print('train loss: {:5.2f}'.format(loss))
 
-        model.eval()
         mse, rrse, corr = evaluate(params, model, valid_iter)
         print('validation mse: {:5.2f}, validation rrse: {:5.2f}, validation corr: {:5.2f}'.format(mse, rrse, corr))
 
