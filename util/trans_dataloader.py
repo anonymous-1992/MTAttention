@@ -1,58 +1,58 @@
+import torch.utils.data
 import pandas as pd
-import torch
-from torch.autograd import Variable
 import os
+import torch
 import numpy as np
+from torch.utils.data import Dataset
 
+class transDataset(Dataset):
+    '''
+    returns [samples, labels]
+    '''
 
-class TransDataset(object):
+    def __init__(self, max_samples, input_size, output_size, time_steps, num_encoder_steps, data):
 
-    def __init__(self,  max_samples,
-                 input_size, output_size, cuda):
         self.input_size = input_size
         self.output_size = output_size
-        self.cuda = cuda
+        self.time_steps = time_steps
         self.max_samples = max_samples
+        self.data = data
+        self.num_encoder_steps = num_encoder_steps
 
-    def get_batches(self, data, i):
+        len_data = len(data)
+        dim = int(len_data / (self.input_size + self.output_size))
+        X = torch.zeros((dim, self.input_size))
+        Y = torch.zeros((dim, self.output_size))
 
-        X, Y = list(), list()
-        in_start = 0
-        for _ in range(len(data)):
-            in_end = in_start + self.input_size
-            out_end = in_end + self.output_size
-            if out_end <= len(data):
-                X.append(data[in_start:in_end])
-                Y.append(data[in_end:out_end])
-            in_start += 1
-        X = np.array(X)
-        Y = np.array(Y)
-        in_size = min(self.max_samples, len(data))
-        inputs = torch.zeros((in_size, self.batch_size, self.input_size))
-        outputs = torch.zeros((in_size, self.batch_size, self.output_size))
+        ind = 0
+        for i in range(0, len_data, input_size + output_size):
+            start = i
+            end = start + self.input_size
+            if end <= len_data:
 
-        inputs[i, :, :] = torch.from_numpy(X[i:i + self.batch_size, :])
-        outputs[i, :, :] = torch.from_numpy(Y[i:i + self.batch_size, :])
+                X[ind, :] = torch.from_numpy(data[start:end])
+                Y[ind, :] = torch.from_numpy(data[end:end + self.output_size])
+            ind += 1
 
-        yield inputs, outputs
+        num_samples = min(self.max_samples, len_data)
 
-    '''def get_batches(self, inputs, target, batch_size, shuffle=True):
+        self.inputs = torch.zeros((num_samples, self.time_steps, self.input_size))
+        self.outputs = torch.zeros((num_samples, self.time_steps, self.output_size))
 
-        length = len(inputs)
-        if shuffle:
-            index = torch.randperm(length)
-        else:
-            index = torch.LongTensor(range(length))
+        for i in range(num_samples):
+            start = i
+            end = start + self.time_steps
+            if len(X[start:end, :]) == self.time_steps:
+                self.inputs[i, :, :] = X[start:end, :]
+                self.outputs[i, :, :] = Y[start:end, :]
 
-        start_idx = 0
-        while start_idx < length:
-            end_idx = min(length, start_idx + batch_size)
-            excerpt = index[start_idx:end_idx]
-            X = inputs[excerpt]
-            Y = target[excerpt]
-            if self.cuda:
-                X = X.cuda()
-                Y = Y.cuda()
-            yield Variable(X), Variable(Y)
-            start_idx += batch_size'''
 
+    def __getitem__(self, index):
+        s = {
+            'inputs': self.inputs[index],
+            'outputs': self.outputs[index],
+        }
+        return s
+
+    def __len__(self):
+        return self.inputs.shape[0]

@@ -62,7 +62,7 @@ class TransformerModel(nn.Module):
         src_decode = src[self.encode_length:, :, :]
 
         # shift outputs to the right by 1
-        src_decode = torch.roll(src_decode, shifts=(0, 0, -1), dims=(0, 1, 2))
+        src_decode = torch.roll(src_decode, shifts=(0, 0, 1), dims=(0, 1, 2))
 
         encoder = nn.Linear(self.input_size, self.d_model)
         decoder = nn.Linear(self.input_size, self.d_model)
@@ -122,6 +122,7 @@ class PositionalEncoding(nn.Module):
 
 
 def get_data(data):
+
     X, Y = list(), list()
     in_start = 0
     for _ in range(len(data)):
