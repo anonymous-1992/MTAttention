@@ -125,10 +125,10 @@ class AR(nn.Module):
         return x
 
 
-class Model(nn.Module):
+class Trns_Model(nn.Module):
     def __init__(self, d_model, n_head, num_enc_layers, num_dec_layers
                  , d_forward, input_size, output_size, encode_length, dropout, add_ar):
-        super(Model, self).__init__()
+        super(Trns_Model, self).__init__()
         self.d_model = d_model
         self.input_size = input_size
         self.output_size = output_size
@@ -294,15 +294,12 @@ def train(params, model, train_loader, criterion):
     return total_loss / total_samples
 
 
-def main():
+def run_models(params, model):
 
-    params = get_configs()
     train_iter = data_loader(params, 'train')
     valid_iter = data_loader(params, 'valid')
     test_iter = data_loader(params, 'test')
-    model = Model(params.d_model, params.n_head, params.num_encoder_layers,
-                  params.num_decoder_layers, params.d_forward, params.input_size,
-                  params.output_size, params.encode_length, params.dropout_rate, params.add_ar)
+
     criterion = nn.MSELoss()
     best_val = float("inf")
     for i in range(params.ephocs):
@@ -319,7 +316,21 @@ def main():
             best_val = mse
 
     mse, rrse, corr = evaluate(params, model, test_iter)
-    print('test mse: {:5.2f}, test rrse: {:5.2f}, test corr: {:5.2f}'.format(mse ,rrse, corr))
+    print('test mse: {:5.2f}, test rrse: {:5.2f}, test corr: {:5.2f}'.format(mse, rrse, corr))
+
+
+def main():
+
+    params = get_configs()
+    trans_model = Trns_Model(params.d_model, params.n_head, params.num_encoder_layers,
+                  params.num_decoder_layers, params.d_forward, params.input_size,
+                  params.output_size, params.encode_length, params.dropout_rate, params.add_ar)
+
+    run_models(params, trans_model)
+
+    ar_model = AR(params.input_size, params.output_size)
+
+    run_models(params, ar_model)
 
 
 if __name__ == '__main__':
