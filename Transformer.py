@@ -247,7 +247,6 @@ def evaluate(params, model, eval_loader):
         total_loss += criterion(predict, labels)
         total_samples += params.batch_size
 
-    print(predict.shape)
     predict = predict.reshape((len(predict) * params.time_steps * params.output_size, ))
     labels = labels.reshape((len(labels) * params.time_steps * params.output_size, ))
     create_plot(labels, predict, 128, params.fname)
