@@ -195,7 +195,6 @@ def get_configs():
     parser.add_argument('--prediction_length', type=int, default=128)
     parser.add_argument('--save', type=str, default="Model")
     parser.add_argument('--add_ar', type=bool, default=False)
-    parser.add_argument('--fname', type=str, default="trns_no_ar")
     params = parser.parse_args()
     return params
 
@@ -228,7 +227,7 @@ def create_plot(labels, predictions, pred_len, fname):
     plt.savefig("%s.svg" % fname)
 
 
-def evaluate(params, model, eval_loader):
+def evaluate(params, model, eval_loader, fname):
     model.eval()
     total_samples = 0
     total_loss = 0
@@ -249,7 +248,7 @@ def evaluate(params, model, eval_loader):
 
     predict = predict.reshape((len(predict) * params.time_steps * params.output_size, ))
     labels = labels.reshape((len(labels) * params.time_steps * params.output_size, ))
-    create_plot(labels, predict, 128, params.fname)
+    create_plot(labels, predict, 128, fname)
 
     y_diff = predict - labels
     y_mean = torch.mean(labels)
@@ -294,7 +293,7 @@ def train(params, model, train_loader, criterion):
     return total_loss / total_samples
 
 
-def run_models(params, model):
+def run_models(params, model, fname):
 
     train_iter = data_loader(params, 'train')
     valid_iter = data_loader(params, 'valid')
@@ -307,7 +306,7 @@ def run_models(params, model):
         loss = train(params, model, train_iter, criterion)
         print('train loss: {:5.2f}'.format(loss))
 
-        mse, rrse, corr = evaluate(params, model, valid_iter)
+        mse, rrse, corr = evaluate(params, model, valid_iter, fname)
         print('validation mse: {:5.2f}, validation rrse: {:5.2f}, validation corr: {:5.2f}'.format(mse, rrse, corr))
 
         if mse < best_val:
@@ -315,7 +314,7 @@ def run_models(params, model):
                 torch.save(model, f)
             best_val = mse
 
-    mse, rrse, corr = evaluate(params, model, test_iter)
+    mse, rrse, corr = evaluate(params, model, test_iter, fname)
     print('test mse: {:5.2f}, test rrse: {:5.2f}, test corr: {:5.2f}'.format(mse, rrse, corr))
 
 
@@ -326,11 +325,11 @@ def main():
                   params.num_decoder_layers, params.d_forward, params.input_size,
                   params.output_size, params.encode_length, params.dropout_rate, params.add_ar)
 
-    run_models(params, trans_model)
+    run_models(params, trans_model, "trns")
 
     ar_model = AR(params.input_size, params.output_size)
 
-    run_models(params, ar_model)
+    run_models(params, ar_model, "ar")
 
 
 if __name__ == '__main__':
