@@ -176,7 +176,7 @@ class Model(nn.Module):
 def get_configs():
 
     parser = argparse.ArgumentParser(description='pytocrh time series forecasting Transformers')
-    parser.add_argument('--data_dir', type=str, default="data/split_ds/")
+    parser.add_argument('--data_dir', type=str, default="../data/split_ds/")
     parser.add_argument('--site', type=str, default="BDCs_1")
     parser.add_argument('--input_size', type=int, default=5, help='window')
     parser.add_argument('--output_size', type=int, default=1, help='horizon')
@@ -187,15 +187,15 @@ def get_configs():
     parser.add_argument('--d_forward', type=int, default=4)
     parser.add_argument('--num_encoder_layers', type=int, default=3)
     parser.add_argument('--num_decoder_layers', type=int, default=3)
-    parser.add_argument('--ephocs', type=int, default=100)
+    parser.add_argument('--ephocs', type=int, default=200)
     parser.add_argument('--time_steps', type=int, default=128)
     parser.add_argument('--encode_length', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--max_samples', type=int, default=1000)
     parser.add_argument('--prediction_length', type=int, default=128)
     parser.add_argument('--save', type=str, default="Model")
-    parser.add_argument('--add_ar', type=bool, default=True)
-    parser.add_argument('--fname', type=str, required=True)
+    parser.add_argument('--add_ar', type=bool, default=False)
+    parser.add_argument('--fname', type=str, default="trns_no_ar")
     params = parser.parse_args()
     return params
 
