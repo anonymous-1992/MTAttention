@@ -9,7 +9,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
-from util import trans_dataloader
+from ..util import trans_dataloader
 
 
 class PositionwiseFeedForward(nn.Module):
