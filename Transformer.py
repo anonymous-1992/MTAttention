@@ -11,11 +11,13 @@ import pandas as pd
 import numpy as np
 from util import trans_dataloader
 import matplotlib.pyplot as plt
+from torch.nn import LayerNorm
 
 SEED = 1234
 torch.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
 np.random.seed(SEED)
+
 
 class PositionwiseFeedForward(nn.Module):
     "Implements FFN equation."
@@ -34,11 +36,13 @@ class EncoderLayer(nn.Module):
         super(EncoderLayer, self).__init__()
         self.self_attn = nn.MultiheadAttention(d_model, n_head, dropout=dropout)
         self.pos_fnn = PositionwiseFeedForward(d_model, d_forward)
+        self.layer_norm = LayerNorm(d_model)
 
     def forward(self, enc_input):
 
         enc_output, self_attn_weights = self.self_attn(enc_input, enc_input, enc_input)
         enc_output = self.pos_fnn(enc_output)
+        enc_output = self.layer_norm(enc_output)
 
         return enc_output
 
@@ -49,12 +53,16 @@ class DecoderLayer(nn.Module):
         self.slf_attn = nn.MultiheadAttention(d_model, n_head, dropout=dropout)
         self.multihead_attn = nn.MultiheadAttention(d_model, n_head, dropout=dropout)
         self.pos_fnn = PositionwiseFeedForward(d_model, d_forward)
+        self.norm_1 = LayerNorm(d_model)
+        self.norm_2 = LayerNorm(d_model)
 
     def forward(self, dec_input, enc_output):
 
         dec_output, slf_attn_weights = self.slf_attn(dec_input, dec_input, dec_input)
+        dec_output = self.norm_1(dec_output)
         dec_output, multi_attn_weights = self.multihead_attn(dec_output, enc_output, enc_output)
         dec_output = self.pos_fnn(dec_output)
+        dec_output = self.norm_2(dec_output)
 
         return dec_output
 
@@ -187,14 +195,16 @@ def get_configs():
     parser.add_argument('--d_forward', type=int, default=4)
     parser.add_argument('--num_encoder_layers', type=int, default=3)
     parser.add_argument('--num_decoder_layers', type=int, default=3)
-    parser.add_argument('--ephocs', type=int, default=200)
+    parser.add_argument('--ephocs', type=int, default=10)
     parser.add_argument('--time_steps', type=int, default=128)
     parser.add_argument('--encode_length', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--max_samples', type=int, default=1000)
     parser.add_argument('--prediction_length', type=int, default=128)
     parser.add_argument('--save', type=str, default="Model")
-    parser.add_argument('--add_ar', type=bool, default=False)
+    parser.add_argument('--add_ar', type=bool, default=True)
+    parser.add_argument('--trns_fname', type=str, default="trns_ar")
+    parser.add_argument('--ar_fname', type=str, default="ar")
     params = parser.parse_args()
     return params
 
@@ -325,11 +335,11 @@ def main():
                   params.num_decoder_layers, params.d_forward, params.input_size,
                   params.output_size, params.encode_length, params.dropout_rate, params.add_ar)
 
-    run_models(params, trans_model, "trns")
+    run_models(params, trans_model, params.trns_fname)
 
     ar_model = AR(params.input_size, params.output_size)
 
-    run_models(params, ar_model, "ar")
+    run_models(params, ar_model, params.ar_fname)
 
 
 if __name__ == '__main__':
