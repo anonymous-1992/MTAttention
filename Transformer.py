@@ -330,7 +330,8 @@ def run_models(params, model, fname):
             with open(params.save, 'wb') as f:
                 torch.save(model, f)
             best_val = mse
-
+    with open(params.save, 'rb') as f:
+        model = torch.load(f)
     mse, rrse, corr = evaluate(params, model, test_iter, fname)
     print('test mse: {:5.2f}, test rrse: {:5.2f}, test corr: {:5.2f}'.format(mse, rrse, corr))
 
