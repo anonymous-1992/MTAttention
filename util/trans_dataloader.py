@@ -20,21 +20,17 @@ class transDataset(Dataset):
         self.num_encoder_steps = num_encoder_steps
 
         len_data = len(data)
-        dim = int(len_data / (self.input_size + self.output_size))
-        X = torch.zeros((dim, self.input_size))
-        Y = torch.zeros((dim, self.output_size))
+        X = torch.zeros((len_data, self.input_size))
+        Y = torch.zeros((len_data, self.output_size))
 
-        ind = 0
-        for i in range(0, len_data, input_size + output_size):
+        for i in range(len_data):
             start = i
             end = start + self.input_size
-            if end <= len_data:
+            if end < len_data:
+                X[i, :] = torch.from_numpy(data[start:end])
+                Y[i, :] = torch.from_numpy(data[end:end + self.output_size])
 
-                X[ind, :] = torch.from_numpy(data[start:end])
-                Y[ind, :] = torch.from_numpy(data[end:end + self.output_size])
-            ind += 1
-
-        num_samples = min(self.max_samples, len_data)
+        num_samples = int(len_data / self.time_steps)
 
         self.inputs = torch.zeros((num_samples, self.time_steps, self.input_size))
         self.outputs = torch.zeros((num_samples, self.time_steps, self.output_size))
@@ -45,7 +41,6 @@ class transDataset(Dataset):
             if len(X[start:end, :]) == self.time_steps:
                 self.inputs[i, :, :] = X[start:end, :]
                 self.outputs[i, :, :] = Y[start:end, :]
-
 
     def __getitem__(self, index):
         s = {

@@ -10,7 +10,12 @@ from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
 from util import trans_dataloader
+import matplotlib.pyplot as plt
 
+SEED = 1234
+torch.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)
+np.random.seed(SEED)
 
 class PositionwiseFeedForward(nn.Module):
     "Implements FFN equation."
@@ -122,12 +127,13 @@ class AR(nn.Module):
 
 class Model(nn.Module):
     def __init__(self, d_model, n_head, num_enc_layers, num_dec_layers
-                 , d_forward, input_size, output_size, encode_length, dropout):
+                 , d_forward, input_size, output_size, encode_length, dropout, add_ar):
         super(Model, self).__init__()
         self.d_model = d_model
         self.input_size = input_size
         self.output_size = output_size
         self.encode_length = encode_length
+        self.add_ar = add_ar
         self.position_encoding = PositionalEncoding(d_model, dropout)
         self.enc_input_embed = nn.Linear(self.input_size, self.d_model)
         self.dec_input_embed = nn.Linear(self.input_size, self.d_model)
@@ -157,9 +163,12 @@ class Model(nn.Module):
 
         output = dec_output
         decoder_output = self.linear_out(output)
-        ar_output = self.ar(src)
 
-        final_output = decoder_output + ar_output
+        if self.add_ar:
+            ar_output = self.ar(src)
+            final_output = decoder_output + ar_output
+        else:
+            final_output = decoder_output
 
         return final_output
 
@@ -183,8 +192,9 @@ def get_configs():
     parser.add_argument('--encode_length', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--max_samples', type=int, default=1000)
-    parser.add_argument('--prediction_length', type=int, default=768)
+    parser.add_argument('--prediction_length', type=int, default=128)
     parser.add_argument('--save', type=str, default="Model")
+    parser.add_argument('--add_ar', type=bool, default=True)
     params = parser.parse_args()
     return params
 
@@ -208,6 +218,15 @@ def data_loader(params, set_type):
     return loader
 
 
+def create_plot(labels, predictions, pred_len):
+    fig, ax = plt.subplots()
+    ax.plot(np.arange(0, pred_len), labels.detach().numpy(), color='lime', label="Measurements")
+    ax.plot(np.arange(0, pred_len), predictions.detach().numpy(), color='darkorange', label="Predictions")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("predVgrd.svg")
+
+
 def evaluate(params, model, eval_loader):
     model.eval()
     total_samples = 0
@@ -227,8 +246,10 @@ def evaluate(params, model, eval_loader):
         total_loss += criterion(predict, labels)
         total_samples += params.batch_size
 
+    print(predict.shape)
     predict = predict.reshape((len(predict) * params.time_steps * params.output_size, ))
     labels = labels.reshape((len(labels) * params.time_steps * params.output_size, ))
+    create_plot(labels, predict, 128)
 
     y_diff = predict - labels
     y_mean = torch.mean(labels)
@@ -245,7 +266,7 @@ def evaluate(params, model, eval_loader):
     corr_inter = corr_num / corr_denom
     corr = torch.sum(corr_inter)
 
-    return total_loss / total_samples,rrse, corr
+    return total_loss / total_samples, rrse, corr
 
 
 def train(params, model, train_loader, criterion):
@@ -281,7 +302,7 @@ def main():
     test_iter = data_loader(params, 'test')
     model = Model(params.d_model, params.n_head, params.num_encoder_layers,
                   params.num_decoder_layers, params.d_forward, params.input_size,
-                  params.output_size, params.encode_length, params.dropout_rate)
+                  params.output_size, params.encode_length, params.dropout_rate, params.add_ar)
     criterion = nn.MSELoss()
     best_val = float("inf")
     for i in range(params.ephocs):
