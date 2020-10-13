@@ -321,10 +321,10 @@ def run_models(params, model, fname):
     for i in range(params.ephocs):
         model.train()
         loss = train(params, model, train_iter, criterion)
-        print('train loss: {:5.2f}'.format(loss))
+        #print('train loss: {:5.2f}'.format(loss))
 
         mse, rrse, corr = evaluate(params, model, valid_iter, fname)
-        print('validation mse: {:5.2f}, validation rrse: {:5.2f}, validation corr: {:5.2f}'.format(mse, rrse, corr))
+        #print('validation mse: {:5.2f}, validation rrse: {:5.2f}, validation corr: {:5.2f}'.format(mse, rrse, corr))
 
         if mse < best_val:
             with open(params.save, 'wb') as f:
