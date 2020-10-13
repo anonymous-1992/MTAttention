@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 from util import trans_dataloader
 import matplotlib.pyplot as plt
-from torch.nn import LayerNorm
+from torch.nn import LayerNorm, Dropout
 
 SEED = 1234
 torch.manual_seed(SEED)
@@ -37,11 +37,13 @@ class EncoderLayer(nn.Module):
         self.self_attn = nn.MultiheadAttention(d_model, n_head, dropout=dropout)
         self.pos_fnn = PositionwiseFeedForward(d_model, d_forward)
         self.layer_norm = LayerNorm(d_model)
+        self.dropout = Dropout(dropout)
 
     def forward(self, enc_input):
 
         enc_output, self_attn_weights = self.self_attn(enc_input, enc_input, enc_input)
         enc_output = self.pos_fnn(enc_output)
+        enc_output = self.dropout(enc_output)
         enc_output = self.layer_norm(enc_output)
 
         return enc_output
@@ -55,13 +57,17 @@ class DecoderLayer(nn.Module):
         self.pos_fnn = PositionwiseFeedForward(d_model, d_forward)
         self.norm_1 = LayerNorm(d_model)
         self.norm_2 = LayerNorm(d_model)
+        self.dropout_1 = Dropout(dropout)
+        self.dropout_2 = Dropout(dropout)
 
     def forward(self, dec_input, enc_output):
 
         dec_output, slf_attn_weights = self.slf_attn(dec_input, dec_input, dec_input)
+        dec_output = self.dropout_1(dec_output)
         dec_output = self.norm_1(dec_output)
         dec_output, multi_attn_weights = self.multihead_attn(dec_output, enc_output, enc_output)
         dec_output = self.pos_fnn(dec_output)
+        dec_output = self.dropout_2(dec_output)
         dec_output = self.norm_2(dec_output)
 
         return dec_output
