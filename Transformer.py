@@ -167,7 +167,7 @@ class Model(nn.Module):
 def get_configs():
 
     parser = argparse.ArgumentParser(description='pytocrh time series forecasting Transformers')
-    parser.add_argument('--data_dir', type=str, default="../data/split_ds/")
+    parser.add_argument('--data_dir', type=str, default="data/split_ds/")
     parser.add_argument('--site', type=str, default="BDCs_1")
     parser.add_argument('--input_size', type=int, default=5, help='window')
     parser.add_argument('--output_size', type=int, default=1, help='horizon')
