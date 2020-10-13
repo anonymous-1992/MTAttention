@@ -195,6 +195,7 @@ def get_configs():
     parser.add_argument('--prediction_length', type=int, default=128)
     parser.add_argument('--save', type=str, default="Model")
     parser.add_argument('--add_ar', type=bool, default=True)
+    parser.add_argument('--fname', type=str, required=True)
     params = parser.parse_args()
     return params
 
@@ -218,13 +219,13 @@ def data_loader(params, set_type):
     return loader
 
 
-def create_plot(labels, predictions, pred_len):
+def create_plot(labels, predictions, pred_len, fname):
     fig, ax = plt.subplots()
     ax.plot(np.arange(0, pred_len), labels.detach().numpy(), color='lime', label="Measurements")
     ax.plot(np.arange(0, pred_len), predictions.detach().numpy(), color='darkorange', label="Predictions")
     plt.legend()
     plt.tight_layout()
-    plt.savefig("predVgrd.svg")
+    plt.savefig("%s.svg" % fname)
 
 
 def evaluate(params, model, eval_loader):
@@ -249,7 +250,7 @@ def evaluate(params, model, eval_loader):
     print(predict.shape)
     predict = predict.reshape((len(predict) * params.time_steps * params.output_size, ))
     labels = labels.reshape((len(labels) * params.time_steps * params.output_size, ))
-    create_plot(labels, predict, 128)
+    create_plot(labels, predict, 128, params.fname)
 
     y_diff = predict - labels
     y_mean = torch.mean(labels)
