@@ -201,7 +201,7 @@ def get_configs():
     parser.add_argument('--d_forward', type=int, default=4)
     parser.add_argument('--num_encoder_layers', type=int, default=3)
     parser.add_argument('--num_decoder_layers', type=int, default=3)
-    parser.add_argument('--ephocs', type=int, default=10)
+    parser.add_argument('--ephocs', type=int, default=100)
     parser.add_argument('--time_steps', type=int, default=128)
     parser.add_argument('--encode_length', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=64)
@@ -234,10 +234,10 @@ def data_loader(params, set_type):
     return loader
 
 
-def create_plot(labels, predictions, pred_len, fname):
+def create_plot(labels, predictions, rmse, pred_len, fname):
     fig, ax = plt.subplots()
     ax.plot(np.arange(0, pred_len), labels.detach().numpy(), color='lime', label="Measurements")
-    ax.plot(np.arange(0, pred_len), predictions.detach().numpy(), color='darkorange', label="Predictions")
+    ax.plot(np.arange(0, pred_len), predictions.detach().numpy(), color='darkorange', label="Predictions rmse: %.2f" % rmse)
     plt.legend()
     plt.tight_layout()
     plt.savefig("%s.svg" % fname)
@@ -264,7 +264,8 @@ def evaluate(params, model, eval_loader, fname):
 
     predict = predict.reshape((len(predict) * params.time_steps * params.output_size, ))
     labels = labels.reshape((len(labels) * params.time_steps * params.output_size, ))
-    create_plot(labels, predict, 128, fname)
+    rmse = math.sqrt(total_loss / total_samples)
+    create_plot(labels, predict, rmse, 128, fname)
 
     y_diff = predict - labels
     y_mean = torch.mean(labels)
@@ -281,7 +282,7 @@ def evaluate(params, model, eval_loader, fname):
     corr_inter = corr_num / corr_denom
     corr = torch.sum(corr_inter)
 
-    return total_loss / total_samples, rrse, corr
+    return rmse, rrse, corr
 
 
 def train(params, model, train_loader, criterion):
