@@ -13,11 +13,6 @@ from util import trans_dataloader
 import matplotlib.pyplot as plt
 from torch.nn import LayerNorm, Dropout
 
-SEED = 1234
-torch.manual_seed(SEED)
-torch.cuda.manual_seed_all(SEED)
-np.random.seed(SEED)
-
 
 class PositionwiseFeedForward(nn.Module):
 
