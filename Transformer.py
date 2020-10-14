@@ -280,8 +280,8 @@ def evaluate(params, model, eval_loader):
         total_loss += criterion(predict, labels)
         total_samples += params.batch_size
 
-    predict = predict.reshape((len(predict) * params.time_steps * params.output_size, ))
-    labels = labels.reshape((len(labels) * params.time_steps * params.output_size, ))
+    predict = predict.reshape((len(predict) * params.horizon, ))
+    labels = labels.reshape((len(labels) * params.horizon, ))
     rmse = math.sqrt(total_loss / total_samples)
 
     y_diff = predict - labels
