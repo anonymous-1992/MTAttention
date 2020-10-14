@@ -348,7 +348,7 @@ def run_models(params, model, fname):
         model = torch.load(f)
     rmse, rrse, corr, predict, labels = evaluate(params, model, test_iter)
     print('test mse: {:5.2f}, test rrse: {:5.2f}, test corr: {:5.2f}'.format(rmse, rrse, corr))
-    create_plot(labels, predict, rmse, params.time_steps * params.output_size, fname)
+    create_plot(labels, predict, rmse, len(predict) * params.horizon, fname)
 
 
 def main():
